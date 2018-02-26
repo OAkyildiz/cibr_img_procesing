@@ -45,10 +45,10 @@ class CVUtilNode: # abstarct this, it can easily work with other cv_utils and be
     def run(self):
         while not rospy.is_shutdown():
             try:
-                pass
+                
                 if self.util.loop(): break
-                #if not -1 in self.util.results():
-                   #self.data_pub()
+                if not -1 in self.util.results():
+                   self.data_pub()
                 #self.rate.sleep()
             except KeyboardInterrupt:
                 self.util.shutdown()

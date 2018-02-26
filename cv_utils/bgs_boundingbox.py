@@ -23,6 +23,8 @@ class SimpleBoundingBox(object):
     def __init__(self,method=MAN, bg=[]):
         self.subtractor=SimpleBoundingBox.BG_METHODS[method]()
         self.out=np.zeros((480,640,3), dtype=np.uint8)
+        self.ellipse_mask=np.zeros((480,640), dtype=np.uint8)
+        self.rectangle_mask=np.zeros((480,640), dtype=np.uint8)
 
         self.results=[0,0,0]
 
@@ -123,41 +125,61 @@ class SimpleBoundingBox(object):
             self.results[-2:]=-1,-1
             return True
 
- 
-		
         cv2.putText(self.out, str(N), (20,20), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+
+        if N==2:
+            contours[].extend[]
         if N in {1,2}:
+
             c=contours[0]
-            (x, y, w, h) = cv2.boundingRect(c)
-            cv2.rectangle(self.out, (x, y), (x + w, y + h), (255, 0, 0),  3, 1)
-
-            epsilon = 0.1*cv2.arcLength(c,True)
-            approx = cv2.approxPolyDP(c,epsilon,True)
-            cv2.drawContours(self.out, [approx],0, (255,0,255), 1)
-
-            hull = cv2.convexHull(c)
-            cv2.drawContours(self.out, [hull],0, (255,255,0), 1)
-
-            #for mask
-            rect = cv2.minAreaRect(c)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-            cv2.drawContours(self.out,[box],0,(0,255,0),2)
+            # (x, y, w, h) = cv2.boundingRect(c)
+            # cv2.rectangle(self.out, (x, y), (x + w, y + h), (255, 0, 0),  3, 1)
+            #
+            # epsilon = 0.1*cv2.arcLength(c,True)
+            # approx = cv2.approxPolyDP(c,epsilon,True)
+            # cv2.drawContours(self.out, [approx],0, (255,0,255), 1)
+            #
+            # hull = cv2.convexHull(c)
+            # cv2.drawContours(self.out, [hull],0, (255,255,0), 1)
 
             if len(c) >= 5:
-                ellipse = cv2.fitEllipseAMS(c) #make a fit function iterator
-                cv2.ellipse(self.out,ellipse,(0,0,255),3)
 
-            (x,y),radius = cv2.minEnclosingCircle(c)
-            cv2.circle(self.out,(int(x),int(y)),int(radius),(0,255,255),2)
+                #for mask
+                rect = cv2.minAreaRect(c)
+                box = cv2.boxPoints(rect)
+                box = np.int0(box)
+                cv2.drawContours(self.rectangle_mask,[box], 0, 255, -1)
+
+                ellipse = cv2.fitEllipseAMS(c) #make a fit function iterator
+                cv2.ellipse(self.ellipse_mask ,ellipse , 255, -1)
+
+                if cv2.countNonZero(cv2.bitwise_and(mask, self.rectangle_mask)) >\
+                    cv2.countNonZero(cv2.bitwise_and(mask, self.ellipse_mask)):
+                    #rectangle
+                    cv2.drawContours(self.out,[box], 0, (0,255,0), 2)
+                    self.results[0]=0
+                    #state="TRACKING"
+                    return False
+
+                else:
+                    #circle
+                    self.results[0]=1
+                    cv2.drawContours(self.out,[box], 0, (0,255,0), 2)
+                    #state="TRACKING"
+                    return False
+
+
+            else: return True
+            # (x,y),radius = cv2.minEnclosingCircle(c)
+            # cv2.circle(ellipse_mask,(int(x),int(y)),int(radius),(0,255,255),2)
             #deficidnt logic will be here
             #after selection
-            self.results[0]=1
+
         else:
             self.results[0]=-1
             return True
 
-        return False #, (x,y) #1 will be shape
+        #return False #, (x,y) #1 will be shape
 
     # try cv2.compare(self.bg,frame,cv2.CMP_LE)
     #def pub(self):this isros functionality, not wanted here
