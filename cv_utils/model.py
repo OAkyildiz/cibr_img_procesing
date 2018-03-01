@@ -4,14 +4,16 @@ import numpy as np
 
 class Model(object):
     def __init__(self,columns = ['x', 'y','label'], infile="grasp_labels", outfile = None):
+        full=(os.path.dirname(os.path.realpath(__file__)))
+
         self.columns=columns
-        self.path="data/"+infile
+        self.path=full+"/../data/"+infile
 
         self.init_data()
         if outfile == None:
             self.out=self.path
         else:
-            self.out="data/"+outfile
+            self.out=full+"../data/"+outfile
             self.is_new=True
 
         self.x_limit,self.y_limit = -1, -1
@@ -29,17 +31,12 @@ class Model(object):
         self.results=pd.DataFrame(columns=self.columns)
 
     def save_data(self):
-        print("Saving to read "+self.path+".csv ...")
-        x=self.data.to_csv(self.out+".csv", mode='w', header=self.columns)
-        print x
+        print("Saving to "+self.path+".csv ...")
+        self.data.to_csv(self.out+".csv", mode='w', header=self.columns)
         if self.is_new:
-            r = open()
             self.results.to_csv(self.out+"_results.csv", mode='w', header=self.columns)
         else:
             self.results.to_csv(self.out+"_results.csv", mode='a', header=self.False)
-
-        f.close()
-        r.close()
 
     def add_data(self, data_row):
         print("Adding", data_row)
@@ -65,7 +62,7 @@ class Model(object):
 
     def classify(self, x, y):
 
-        if x<self.x_limit and y<self.y_limit:
+        if x<self.x_limit or y<self.y_limit:
             res = ( abs(x/y -self.Mu) < 2*self.Sigma )
         else:
             res = -1

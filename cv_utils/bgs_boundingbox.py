@@ -1,7 +1,9 @@
 from __future__ import division
-import sys
+import sys,os
 import numpy as np
 import cv2
+
+base=os.path.dirname(os.path.realpath(__file__))+"/../img/bbox/"
 class Color():
     RED     = (0,0,255)
     GREEN   = (0,255,0)
@@ -13,6 +15,7 @@ class Color():
 MIN_PIX=60 # pixel threshold
 def nothing():
     pass
+
 
 #it is a class because we want it to wrok with ros image streams and video
 class SimpleBoundingBox(object):
@@ -34,7 +37,7 @@ class SimpleBoundingBox(object):
         self.subtractor=SimpleBoundingBox.BG_METHODS[method]()
         self.set_frames()
         self.diff_thresh=55
-        self.results=[0,0,0]
+        self.results=[-1,-1,-1]
         self.N=0
         self._training = 0
         if method == SimpleBoundingBox.GMG:
@@ -102,8 +105,7 @@ class SimpleBoundingBox(object):
 
     def shutdown(self):
         if not self.model is None:
-            print("Saving data")
-            self.model.save_data
+            self.model.save_data()
         print("Closing UI")
         cv2.destroyAllWindows()
         print("Shutting down")
@@ -208,16 +210,15 @@ class SimpleBoundingBox(object):
                 rect_err=cv2.countNonZero(rect_err_px)
                 circ_err=cv2.countNonZero(circ_err_px)
 
-                cv2.putText(self.out, "eR: " +str(rect_err), (400,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.GREEN,2)
-                cv2.putText(self.out, "eC: " + str(circ_err), (400,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.YELLOW,2)
+                cv2.putText(self.out, "eR: %2.f" % rect_err, (400,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.GREEN,2)
+                cv2.putText(self.out, "eC: %2.f" % circ_err, (400,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.YELLOW,2)
 
                 if rect_err < circ_err:
                     #rectangle
                     cv2.drawContours(self.out,[box], 0, Color.GREEN, 2)
                     self.results[0]=0
-                    #state="TRACKING"
+                    #state="TRACING"
                     return False
-
                 else:
                     #circle
                     self.results[0]=1
@@ -245,8 +246,8 @@ class SimpleBoundingBox(object):
         if len(c):
             rect = cv2.minAreaRect(c)
             (x,y),(w,h), angle = rect
-            cv2.putText(self.out, "w: %2.f" % w , (400,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.MAGENTA, 2)
-            cv2.putText(self.out, "h: %2.f" % h , (400,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.CYAN, 2)
+            cv2.putText(self.out, "w: %.2f" % w , (400,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.MAGENTA, 2)
+            cv2.putText(self.out, "h: %.2f" % h , (400,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5,Color.CYAN, 2)
             box = cv2.boxPoints(rect)
             box = np.int0(box)
 
@@ -259,6 +260,7 @@ class SimpleBoundingBox(object):
                     self.add_result([w,h,res])
                     #later make this apply on init_data
                     #if model is not None: self.model.add_prediction([w,h,res])
+
             else:
                 self.cur_data=[w,h,-5] #current data, with placeholder label
 
@@ -290,10 +292,10 @@ class SimpleBoundingBox(object):
             self.cur_data[2]=label
             self.model.add_data(self.cur_data)
     ### Interface functions
-
     def capture_bg(self, frame):
         self.bg=frame
         self.means=cv2.mean(frame)
+
         self.mean=np.mean(self.means)
 
     def toggle_manual(self):
@@ -305,17 +307,24 @@ class SimpleBoundingBox(object):
         self._training ^=1
         print("Training", bool(self._training))
 
+    def save_img(self):
+        folder= "training/" if self._training else "predicted/"
+        img=folder+str(len(os.listdir(base+folder)))+".jpg"
+        print("Saving "+img)
+        cv2.imwrite(base+img,self.out)
 
     def print_info(self):
-        print("G: ( %.3f, %3.f )" % self.model.Mu, self.model.Sigma )
-
+        print("G: ( %.3f, %.3f )" % (self.model.Mu, self.model.Sigma))
+        print("Max size:  %.2f x %.2f" % (self.model.x_limit, self.model.y_limit))
+        
     def keyboard_ops(self,k):
         if self.external_ops(k): pass
-        elif k == ord('c'): self.capture_bg(self.inp)
+        elif k == ord('b'): self.capture_bg(self.inp)
         elif k == ord('v'): self.toggle_manual()
         #elif k == ord('b'): self.toggle_publish()
         elif k == ord('m'): self.toggle_training()
         elif k == ord('i'): self.print_info()
+        elif k == ord('c'): self.save_img()
 
 
         elif ord('0') <= k <= ord('1') and self._training: self.add_data(k-ord('0'))
@@ -363,8 +372,8 @@ if __name__ == '__main__':
     source=sys.argv[1]
     if source == "0": source=0
     elif source == "1": source=1
-
     sys.exit(main(source))
 
 else:
+
     print("Imported Simple Bounding Box module ")

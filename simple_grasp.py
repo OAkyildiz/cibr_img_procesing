@@ -26,9 +26,9 @@ def handy():
     global cmd, is_grasping
 
     if not is_grasping:
-        cmd.f1=1.85
-        cmd.f2=1.85
-        cmd.f3=1.85
+        cmd.f1=1.99
+        cmd.f2=1.99
+        cmd.f3=1.99
         command_pub.publish(cmd)
         is_grasping=True
         print("Grasping")
