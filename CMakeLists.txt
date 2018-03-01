@@ -6,9 +6,10 @@ project(cibr_img_processing)
 
 ## Find catkin macros and libraries
 
-find_package(catkin REQUIRED COMPONENTS
+find_package(catkin REQUIRED COMPONENTS message_generation
   rospy
   sensor_msgs
+#  reflex_msgs
   cv_bridge
 )
 
@@ -17,13 +18,28 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Uncomment this if the package has a setup.py. # catkin_python_setup()
 
+
+## message message_generation
+
+## Generate messages in the 'msg' folder
+ add_message_files(
+   FILES
+   Ints.msg
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
 #  INCLUDE_DIRS include
-  LIBRARIES cibr_img_proc
-  CATKIN_DEPENDS rospy sensor_msgs cv_bridge
+  LIBRARIES cibr_img_processing
+  CATKIN_DEPENDS message_runtime rospy sensor_msgs cv_bridge # reflex_msgs
 #  DEPENDS system_lib
 )
 

@@ -1,17 +1,19 @@
 <launch>
 <arg name="self"  default="true" />
-<arg name="topic" default="/usb_cam/image_raw"/>
 <arg name="sel" default="0"/>
+<arg if="$(arg self)" name="topic" default="/usb_cam/image_raw"/>
+<arg unless="$(arg self)" name="topic" default="/cameras/left_hand_camera/image"/>
 
 <group if="$(arg self)">
-
   <include file="$(find usb_cam)/launch/usb_cam-test.launch" />
   <param name="/usb_cam/video_device" value="/dev/video$(arg sel)" />
   <remap from="/usb_cam/image_raw" to="$(arg topic)" />
 </group>
 
 
-<node name="boxer" pkg="cibr_img_proc" type="simple_objs_node.py"   >
+<node name="boxer" pkg="cibr_img_processing" type="simple_objs_node.py" output="screen">
   <remap from="image_topic" to="$(arg topic)"/>
+  <remap from="results" to="boxer/results"/>
+
 </node>
 </launch>
